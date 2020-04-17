@@ -28,6 +28,11 @@ def modInverse(a, m):
     if (m == 1):
         return 0
     while (a > 1):
+
+        #i have no idea why but it fixes the problem
+        # if (m == 0):
+        #     print("black magic")
+        #     return -1
         q = a // m
         t = m
         m = a % m
@@ -53,11 +58,17 @@ def ellipticAddition(P1,P2,E,N):
     #   actually doesnt check for a - d cases
     if(P1.geta() ==  P2.geta() and P1.getb() ==  P2.getb()):
         top = (3*(P1.geta())*(P1.geta())  + E.geta()) % N
-        bot = modInverse((2*P1.getb()),N)
+        #print("look")
+        bot = 2*P1.getb() % N
+        if (gcd(bot,N) != 1):
+            ret = Pair(-1,bot)
+            return ret
+        bot = modInverse(bot,N)
+
         #print(str(top) + " " + str(bot))
 
     else:
-        bot = P2.geta() - P1.geta()
+        bot = (P2.geta() - P1.geta())%N
         if (gcd(bot,N) != 1):
             ret = Pair(-1,bot)
             return ret
@@ -75,12 +86,12 @@ def ellipticAddition(P1,P2,E,N):
 
 def LECFA(N):
     #random.randint(1,N-1)
-    A = 14
-    a = 1512
-    b = 3166
+    A = random.randint(1,N-1)
+    a = random.randint(1,N-1)
+    b = random.randint(1,N-1)
     P = Pair(a,b)
     B = (math.pow(b,2) - math.pow(a,3) - (A*a)) % N
-    #print("B: " + str(B))
+    print("B: " + str(B) + " " + str(A))
     E = Pair(A,B)
     jmax = 100
     for j in range (2,jmax):
@@ -103,7 +114,7 @@ def LECFA(N):
         print(str(binlist))
         jbreak = []
         Q2 = ellipticAddition(P,P,E,N)
-        #print(" | Q2: (" + str(Q2.geta()) + "," + str(Q2.getb()) + ")" )
+        print(" | Q2: (" + str(Q2.geta()) + "," + str(Q2.getb()) + ")" )
         flag =0
         for i in range(0,len(binlist)):
             if binlist[i] == 1:
@@ -113,15 +124,31 @@ def LECFA(N):
                         Q = P
                     else:
                         n = pow(2,i)/2
+                        print(str(n))
                         Q = doubleandadd(n,Q2,E,N)
                 else:
                     n = pow(2, i) / 2
+                    #print(str(n))
                     R = doubleandadd(n, Q2, E, N)
-                    print(" | R: (" + str(R.geta()) + "," + str(R.getb()) + ")")
-                    Q = ellipticAddition(Q,R,E,N)
+                    if R.geta() == -1:
+                        if 1 < R.getb() < N:
+                            return gcd((-1 * R.getb()) % N, N)
+                        if R.getb() == N:
+                            return -1
+                    #print("R: (" + str(R.geta()) + "," + str(R.getb()) + ")")
+                    Q = ellipticAddition(R,Q,E,N)
+
+
         #print(" | Q: (" + str(Q.geta()) + "," + str(Q.getb()) + ")")
         P = Q
         print("j: " + str(j)+ " | P: (" + str(P.geta()) + "," + str(P.getb()) + ")" )
+        if P.geta() == -1:
+            if 1 < P.getb() < N:
+                return gcd((-1 * P.getb()) % N, N)
+        if P.getb() == N:
+            return -1
+        if (j == jmax):
+            return -1
 
 
 
@@ -135,21 +162,13 @@ def doubleandadd(n,P,E,N):
     watch = 0
     i = 0
     while n > 0:
-
         if (n % 2 == 1):
             if (watch == 0):
                 R = Q
                 watch = 1
                 #print("flipped")
             else:
-                #im not to sure about this but it just werks
-                temp = ellipticAddition(R,Q,E,N)
-                if(temp.geta() == -1):
-                    #print("adjusted")
-                    R = ellipticAddition(Q,R,E,N)
-                else:
-                    #print("normal")
-                    R = temp
+                R = ellipticAddition(R,Q,E,N)
                 #print("~Q: (" + str(Q.geta()) + "," + str(Q.getb()) + ") | R: (" + str(R.geta()) + "," + str(R.getb())+")")
         Q = ellipticAddition(Q,Q,E,N)
         n = n//2
